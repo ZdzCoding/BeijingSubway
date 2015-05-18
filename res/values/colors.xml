@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="btn_pressed">#F36611</color>
+    <color name="btn_enabled">#F38511</color>
+</resources>
