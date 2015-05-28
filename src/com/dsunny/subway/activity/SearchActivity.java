@@ -108,7 +108,7 @@ public class SearchActivity extends BaseActivity {
                     String startSName = et_start.getText().toString().trim();
                     String endSName = et_end.getText().toString().trim();
                     TransPath transPath = new TransPath();
-                    processResult(transPath.getTransPath(startSName, endSName));
+                    processResult(transPath.getTransPaths(startSName, endSName));
                     break;
 
                 case R.id.btn_talk:
@@ -132,7 +132,7 @@ public class SearchActivity extends BaseActivity {
                     et_result.setText(rs.get(0));
                     TransPath transPath = new TransPath();
                     List<String> lstSNames = BaiduVoice.getInstance().getInputSNames(rs.get(0));
-                    processResult(transPath.getTransPath(lstSNames.get(0), lstSNames.get(1)));
+                    processResult(transPath.getTransPaths(lstSNames.get(0), lstSNames.get(1)));
                 }
             }
         };

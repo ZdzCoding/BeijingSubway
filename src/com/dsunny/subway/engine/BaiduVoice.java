@@ -17,11 +17,17 @@ public class BaiduVoice {
     private List<String> lstSNames;
     private static BaiduVoice baiduVoice;
 
+    /**
+     * 单例模式
+     */
     private BaiduVoice() {
         StationDao sDao = new StationDao();
         lstSNames = sDao.getAllSNames();
     }
 
+    /**
+     * @return 百度语音实例
+     */
     public static BaiduVoice getInstance() {
         if (baiduVoice == null) {
             baiduVoice = new BaiduVoice();
@@ -29,6 +35,10 @@ public class BaiduVoice {
         return baiduVoice;
     }
 
+    /**
+     * @author m
+     * 
+     */
     private class Record {
         String name;
         int index;

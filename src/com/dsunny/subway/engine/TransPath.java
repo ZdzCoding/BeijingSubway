@@ -11,9 +11,11 @@ import com.dsunny.subway.bean.TransPathDetail;
 import com.dsunny.subway.bean.TransPathSummary;
 import com.dsunny.subway.bean.TransSubPath;
 import com.dsunny.subway.constant.Message;
+import com.dsunny.subway.constant.SubwayConst;
 import com.dsunny.subway.db.LineDao;
 import com.dsunny.subway.db.StationDao;
 import com.dsunny.subway.db.TStationDao;
+import com.dsunny.subway.db.TransferDao;
 import com.dsunny.subway.util.Logger;
 import com.dsunny.subway.util.Utils;
 
@@ -24,29 +26,47 @@ import com.dsunny.subway.util.Utils;
 public class TransPath {
     public static final String TAG = "TransPath";
 
-    private static final int MaxResultCount = 3;
-    private static final int MaxMeters = Integer.MAX_VALUE;
+    private static final String SID_1408 = "1408";
+    private static final String SID_1425 = "1425";
 
     private LineDao mLDao;
     private StationDao mSDao;
+    private TransferDao mTDao;
     private TStationDao mTSDao;
-    private SubwayGraph mSg;
 
     public TransPath() {
         mLDao = new LineDao();
         mSDao = new StationDao();
+        mTDao = new TransferDao();
         mTSDao = new TStationDao();
-        initSubwayGraph();
     }
 
     /**
-     * 初始化抽象地铁图
+     * @param startSName
+     *            起始车站名
+     * @param endSName
+     *            终止车站名
+     * @return 所有换乘信息
      */
-    private void initSubwayGraph() {
-        // 取得所有路线换乘信息，可优化
-        List<TStation> lstTStation = mTSDao.getAllTStations();
-        mSg = new SubwayGraph(lstTStation);
-        mSg.printGraph();
+    public SearchResult getTransPaths(String startSName, String endSName) {
+        Logger.d(TAG, "getTransPaths");
+        SearchResult result = null;
+
+        int code = checkStation(startSName, endSName);
+        if (code != Message.CHECK_OK) {
+            result = new SearchResult();
+            result.startSName = startSName;
+            result.endSName = endSName;
+            result.code = code;
+            result.lstTpd = new ArrayList<TransPathDetail>();
+        } else {
+            List<String> lstStartSids = mSDao.getAllSidsByName(startSName);
+            List<String> lstEndSids = mSDao.getAllSidsByName(endSName);
+            List<String[]> lstTransLids = getAllTransLids(lstStartSids, lstEndSids);
+            result = getAllTransPaths(lstStartSids.get(0), lstEndSids.get(0), lstTransLids);
+        }
+
+        return result;
     }
 
     /**
@@ -76,14 +96,177 @@ public class TransPath {
     }
 
     /**
+     * @param lstStartSids
+     *            起点车站ID
+     * @param lstEndSids
+     *            终点车站ID
+     * @return 换乘线路
+     */
+    private List<String[]> getAllTransLids(List<String> lstStartSids, List<String> lstEndSids) {
+        Logger.d(TAG, "getAllTransLids");
+        List<String[]> lstResult = null;
+
+        List<String> lstStartLids = new ArrayList<String>();
+        for (String s : lstStartSids) {
+            lstStartLids.add(Utils.getLID(s));
+        }
+
+        List<String> lstEndLids = new ArrayList<String>();
+        for (String s : lstEndSids) {
+            lstEndLids.add(Utils.getLID(s));
+        }
+
+        List<String> lstCommonLids = new ArrayList<String>(lstStartLids);
+        lstCommonLids.retainAll(lstEndLids);
+
+        switch (lstCommonLids.size()) {
+        case 0:
+            // 不在同一线路
+            LineGraph lg = new LineGraph();
+            lstResult = lg.getAllTransLids(lstStartLids, lstEndLids);
+            break;
+        case 1:
+            // 在同一线路
+            String sCmnLid = lstCommonLids.get(0);
+            String startSid = null;
+            String endSid = null;
+            if (sCmnLid.equals(SubwayConst.Line_14)) {
+                startSid = mSDao.getLineSIDByName(SubwayConst.Line_14, lstStartSids.get(0));
+                endSid = mSDao.getLineSIDByName(SubwayConst.Line_14, lstEndSids.get(0));
+                if ((startSid.compareTo(SID_1408) < 0 && endSid.compareTo(SID_1408) < 0)
+                        || (endSid.compareTo(SID_1425) > 0 && endSid.compareTo(SID_1425) > 0)) {
+                    lstResult = new ArrayList<String[]>();
+                    lstResult.add(new String[] { sCmnLid });
+                } else {
+                    LineGraph lg2 = new LineGraph();
+                    lstResult = lg2.getAllTransLids(SubwayConst.Line_14a, SubwayConst.Line_14b);
+                }
+            } else if (sCmnLid.equals(SubwayConst.Line_99)) {
+                startSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstStartSids.get(0));
+                endSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstEndSids.get(0));
+                if ((startSid.equals("9902") && endSid.equals("9903"))
+                        || (startSid.equals("9903") && endSid.equals("9902"))) {
+                    lstResult = new ArrayList<String[]>();
+                    lstResult.add(new String[] { sCmnLid });
+                    lstResult.add(new String[] { SubwayConst.Line_02, SubwayConst.Line_13,
+                            SubwayConst.Line_10 });
+                }
+            } else {
+                lstResult = new ArrayList<String[]>();
+                lstResult.add(new String[] { sCmnLid });
+                if (mLDao.isLineHasLoop(sCmnLid)) {
+                    List<String> lstLids = mTDao.getAcrossLids(sCmnLid);
+                    for (String lid : lstLids) {
+                        lstResult.add(new String[] { sCmnLid, lid });
+                    }
+                }
+            }
+            break;
+        case 2:
+            // 特殊(四惠-四惠东)
+            lstResult = new ArrayList<String[]>();
+            lstResult.add(new String[] { lstCommonLids.get(0) });
+            lstResult.add(new String[] { lstCommonLids.get(1) });
+            break;
+        default:
+            break;
+        }
+
+        return lstResult;
+    }
+
+    /**
      * @param startSid
      *            起始车站ID(图)
      * @param endSid
      *            终止车站ID(图)
+     * @param lstTransLids
+     *            换乘线路
+     * @return 所有换乘信息
+     */
+    private SearchResult getAllTransPaths(String startSid, String endSid,
+            List<String[]> lstTransLids) {
+        Logger.d(TAG, "getAllTransPaths");
+        SearchResult result = new SearchResult();
+        result.startSName = mSDao.getSName(startSid);
+        result.endSName = mSDao.getSName(endSid);
+        result.code = Message.CHECK_OK;
+        result.lstTpd = new ArrayList<TransPathDetail>();
+
+        for (String[] arr : lstTransLids) {
+            SubwayGraph sg = null;
+            if (arr.length == 1) {
+                sg = new SubwayGraph(mTSDao.getLineTStations(arr[0]));
+            } else {
+                if (arr[0].equals(SubwayConst.Line_99)) {
+                    arr[0] = "";
+                    sg = new SubwayGraph(mTSDao.getLinesTStations(arr));
+                    List<TStation> lst1 = mTSDao.getLineTStations(SubwayConst.Line_99);
+                    TStation ts = lst1.get(0);
+                    sg.addDoubleEdges(ts.StartSID, ts.EndSID, ts.LID, ts.Meters);
+                    lst1.remove(0);
+                    for (TStation t : lst1) {
+                        sg.addEdge(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                } else if (arr[0].equals(SubwayConst.Line_94)) {
+                    arr[0] = "";
+                    arr[1] = "";
+                    sg = new SubwayGraph(mTSDao.getLinesTStations(arr));
+                    List<TStation> lst1 = mTSDao.getLineTStations(SubwayConst.Line_01);
+                    for (TStation t : lst1) {
+                        sg.addDoubleEdges(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                    List<TStation> lst2 = mTSDao.getLineTStations(SubwayConst.Line_94);
+                    lst2.remove(0);
+                    for (TStation t : lst2) {
+                        sg.addDoubleEdges(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                } else if (arr[arr.length - 1].equals(SubwayConst.Line_99)) {
+                    arr[arr.length - 1] = "";
+                    sg = new SubwayGraph(mTSDao.getLinesTStations(arr));
+                    List<TStation> lst1 = mTSDao.getLineTStations(SubwayConst.Line_99);
+                    TStation ts = lst1.get(0);
+                    sg.addDoubleEdges(ts.StartSID, ts.EndSID, ts.LID, ts.Meters);
+                    lst1.remove(0);
+                    for (TStation t : lst1) {
+                        sg.addEdge(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                } else if (arr[arr.length - 1].equals(SubwayConst.Line_94)) {
+                    arr[arr.length - 1] = "";
+                    arr[arr.length - 2] = "";
+                    sg = new SubwayGraph(mTSDao.getLinesTStations(arr));
+                    List<TStation> lst1 = mTSDao.getLineTStations(SubwayConst.Line_01);
+                    lst1.remove(lst1.size() - 1);
+                    for (TStation t : lst1) {
+                        sg.addDoubleEdges(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                    List<TStation> lst2 = mTSDao.getLineTStations(SubwayConst.Line_94);
+                    for (TStation t : lst2) {
+                        sg.addDoubleEdges(t.StartSID, t.EndSID, t.LID, t.Meters);
+                    }
+                } else {
+                    sg = new SubwayGraph(mTSDao.getLinesTStations(arr));
+                }
+            }
+            sg.printGraph();
+            TransPathSummary[] tps = getTransPathSummary(sg, startSid, endSid);
+            TransPathDetail tpd = getTransPathDetail(tps);
+            addTransPathDetail(result, tpd);
+        }
+        return result;
+    }
+
+    /**
+     * @param sg
+     *            抽象地铁图
+     * @param startSid
+     *            检索起始车站ID(图)
+     * @param endSid
+     *            检索终止车站ID(图)
      * @return 换乘简要信息
      */
-    private TransPathSummary[] getFirstPathSummary(String startSid, String endSid) {
-        Logger.d(TAG, "getFirstPathSummary");
+    private TransPathSummary[] getTransPathSummary(SubwayGraph sg, String startSid, String endSid) {
+        Logger.d(TAG, "getTransPathSummary");
         List<String> lstStartAdjSids = null;
         List<String> lstEndAdjSids = null;
 
@@ -94,183 +277,52 @@ public class TransPath {
             lstEndAdjSids = mLDao.getAdjacentSids(endSid);
         }
 
+        int meters = 0;
+        String lid = null;
+        String preGraphSid = null;
+        String nxtGraphSid = null;
         if (lstStartAdjSids != null && lstEndAdjSids != null
                 && lstStartAdjSids.toString().equals(lstEndAdjSids.toString())) {
-            addNewStartStations(lstStartAdjSids, startSid, endSid);
+            lid = Utils.getLID(startSid);
+            preGraphSid = mSDao.getGraphSidById(lstStartAdjSids.get(0));
+            nxtGraphSid = mSDao.getGraphSidById(lstStartAdjSids.get(1));
+
+            sg.delDoubleEdges(preGraphSid, nxtGraphSid);
+
+            meters = mLDao.getAdjacentSMeters(lstStartAdjSids.get(0), startSid);
+            sg.addDoubleEdges(preGraphSid, startSid, lid, meters);
+            meters = mLDao.getAdjacentSMeters(startSid, endSid);
+            sg.addDoubleEdges(startSid, endSid, lid, meters);
+            meters = mLDao.getAdjacentSMeters(endSid, lstStartAdjSids.get(1));
+            sg.addDoubleEdges(endSid, nxtGraphSid, lid, meters);
         } else {
-            addNewStartStation(lstStartAdjSids, startSid);
-            addNewStartStation(lstEndAdjSids, endSid);
-        }
+            if (lstStartAdjSids != null) {
+                lid = Utils.getLID(startSid);
+                preGraphSid = mSDao.getGraphSidById(lstStartAdjSids.get(0));
+                nxtGraphSid = mSDao.getGraphSidById(lstStartAdjSids.get(1));
 
-        return mSg.getTransPathSummary(startSid, endSid);
-    }
+                sg.delDoubleEdges(preGraphSid, nxtGraphSid);
 
-    /**
-     * @param lstAdjSids
-     *            车站ID的相邻换乘车站ID
-     * @param sid
-     *            车站ID
-     */
-    private void addNewStartStation(List<String> lstAdjSids, String sid) {
-        Logger.d(TAG, "addNewStartStation");
-        if (lstAdjSids != null) {
-            int meters = 0;
-            String lid = Utils.getLID(sid);
-            String preGraphSid = mSDao.getGraphSidById(lstAdjSids.get(0));
-            String nxtGraphSid = mSDao.getGraphSidById(lstAdjSids.get(1));
+                meters = mLDao.getAdjacentSMeters(lstStartAdjSids.get(0), startSid);
+                sg.addDoubleEdges(preGraphSid, startSid, lid, meters);
+                meters = mLDao.getAdjacentSMeters(startSid, lstStartAdjSids.get(1));
+                sg.addDoubleEdges(startSid, nxtGraphSid, lid, meters);
+            }
+            if (lstEndAdjSids != null) {
+                lid = Utils.getLID(endSid);
+                preGraphSid = mSDao.getGraphSidById(lstEndAdjSids.get(0));
+                nxtGraphSid = mSDao.getGraphSidById(lstEndAdjSids.get(1));
 
-            mSg.delDoubleEdges(preGraphSid, nxtGraphSid);
+                sg.delDoubleEdges(preGraphSid, nxtGraphSid);
 
-            meters = mLDao.getAdjacentSMeters(lstAdjSids.get(0), sid);
-            mSg.addDoubleEdges(preGraphSid, sid, lid, meters);
-            meters = mLDao.getAdjacentSMeters(sid, lstAdjSids.get(1));
-            mSg.addDoubleEdges(sid, nxtGraphSid, lid, meters);
-
-            Logger.d(TAG, preGraphSid + "-" + sid);
-            Logger.d(TAG, sid + "-" + nxtGraphSid);
-        }
-    }
-
-    /**
-     * @param lstAdjSids
-     *            车站ID的相邻换乘车站ID
-     * @param sid1
-     *            车站ID
-     * @param sid2
-     *            车站ID
-     */
-    private void addNewStartStations(List<String> lstAdjSids, String sid1, String sid2) {
-        Logger.d(TAG, "addNewStartStations");
-        if (lstAdjSids != null) {
-            int meters = 0;
-            String lid = Utils.getLID(sid1);
-            String preGraphSid = mSDao.getGraphSidById(lstAdjSids.get(0));
-            String nxtGraphSid = mSDao.getGraphSidById(lstAdjSids.get(1));
-
-            mSg.delDoubleEdges(preGraphSid, nxtGraphSid);
-
-            meters = mLDao.getAdjacentSMeters(lstAdjSids.get(0), sid1);
-            mSg.addDoubleEdges(preGraphSid, sid1, lid, meters);
-            meters = mLDao.getAdjacentSMeters(sid1, sid2);
-            mSg.addDoubleEdges(sid1, sid2, lid, meters);
-            meters = mLDao.getAdjacentSMeters(sid2, lstAdjSids.get(1));
-            mSg.addDoubleEdges(sid2, nxtGraphSid, lid, meters);
-
-            Logger.d(TAG, preGraphSid + "-" + sid1);
-            Logger.d(TAG, sid1 + "-" + sid2);
-            Logger.d(TAG, sid2 + "-" + nxtGraphSid);
-        }
-    }
-
-    /**
-     * @param startSName
-     *            起始车站名
-     * @param endSName
-     *            终止车站名
-     * @return 换乘详细信息
-     */
-    public SearchResult getTransPath(String startSName, String endSName) {
-        Logger.d(TAG, "getTransPath");
-        SearchResult result = null;
-
-        int code = checkStation(startSName, endSName);
-        if (code != Message.CHECK_OK) {
-            result = new SearchResult();
-            result.startSName = startSName;
-            result.endSName = endSName;
-            result.code = code;
-            result.lstTpd = new ArrayList<TransPathDetail>();
-        } else {
-            String lid = mSDao.getCommonLidByName(startSName, endSName);
-            if (TextUtils.isEmpty(lid) || mLDao.isLineHasLoop(lid)) {
-                result = getAllTransPaths(startSName, endSName);
-            } else {
-                result = getSingleTransPath(lid, startSName, endSName);
+                meters = mLDao.getAdjacentSMeters(lstEndAdjSids.get(0), endSid);
+                sg.addDoubleEdges(preGraphSid, endSid, lid, meters);
+                meters = mLDao.getAdjacentSMeters(endSid, lstEndAdjSids.get(1));
+                sg.addDoubleEdges(endSid, nxtGraphSid, lid, meters);
             }
         }
 
-        return result;
-    }
-
-    /**
-     * @param startSName
-     *            起始车站名
-     * @param endSName
-     *            终止车站名
-     * @return 同一路线换乘详细信息
-     */
-    public SearchResult getSingleTransPath(String lid, String startSName, String endSName) {
-        Logger.d(TAG, "getSingleTransPath");
-        SearchResult result = new SearchResult();
-        result.startSName = startSName;
-        result.endSName = endSName;
-        result.code = Message.CHECK_OK;
-        result.lstTpd = new ArrayList<TransPathDetail>();
-
-        String startSid = mSDao.getGraphSidByName(startSName);
-        String endSid = mSDao.getGraphSidByName(endSName);
-
-        TransPathSummary[] arrTps = getFirstPathSummary(startSid, endSid);
-        if (arrTps != null) {
-            TransPathDetail tpd = getTransPathDetail(arrTps);
-            result.lstTpd.add(tpd);
-        }
-
-        result.count = result.lstTpd.size();
-        return result;
-    }
-
-    /**
-     * @param startSName
-     *            起始车站名
-     * @param endSName
-     *            终止车站名
-     * @return 所有换乘详细信息
-     */
-    public SearchResult getAllTransPaths(String startSName, String endSName) {
-        Logger.d(TAG, "getAllTransPaths");
-        SearchResult result = new SearchResult();
-        result.startSName = startSName;
-        result.endSName = endSName;
-        result.code = Message.CHECK_OK;
-        result.lstTpd = new ArrayList<TransPathDetail>();
-
-        String startSid = mSDao.getGraphSidByName(startSName);
-        String endSid = mSDao.getGraphSidByName(endSName);
-        TransPathSummary[] arrTps = getFirstPathSummary(startSid, endSid);
-
-        int resultCount = 0;
-        while (arrTps != null && resultCount < MaxResultCount) {
-            TransPathDetail tpd = getTransPathDetail(arrTps);
-            result.lstTpd.add(tpd);
-            resultCount++;
-
-            int index = 0;
-            int minMeters = MaxMeters;
-            for (int i = 0; i < arrTps.length; i++) {
-                if (arrTps[i].meters < minMeters) {
-                    minMeters = arrTps[i].meters;
-                    index = i;
-                }
-            }
-
-            int size = arrTps[index].lstSids.size();
-            if (size > 0) {
-                mSg.delDoubleEdges(arrTps[index].startSid, arrTps[index].lstSids.get(0));
-                for (int i = 0; i < size - 1; i++) {
-                    mSg.delDoubleEdges(arrTps[index].lstSids.get(i),
-                            arrTps[index].lstSids.get(i + 1));
-                }
-                mSg.delDoubleEdges(arrTps[index].lstSids.get(size - 1), arrTps[index].endSid);
-            } else {
-                mSg.delDoubleEdges(arrTps[index].startSid, arrTps[index].endSid);
-            }
-
-            arrTps = mSg.getTransPathSummary(startSid, endSid);
-        }
-
-        result.count = result.lstTpd.size();
-        return result;
+        return sg.getTransPathSummary(startSid, endSid);
     }
 
     /**
@@ -291,8 +343,8 @@ public class TransPath {
             tsp.endSName = mSDao.getSName(arrTps[i].endSid);
             tsp.lineName = mLDao.getLineName(arrTps[i].lid);
 
-            String startSid = mSDao.getLineSID(arrTps[i].lid, tsp.startSName);
-            String endSid = mSDao.getLineSID(arrTps[i].lid, tsp.endSName);
+            String startSid = mSDao.getLineSIDByName(arrTps[i].lid, tsp.startSName);
+            String endSid = mSDao.getLineSIDByName(arrTps[i].lid, tsp.endSName);
             if (mLDao.isLoopLine(arrTps[i].lid)) {
                 String sName = arrTps[i].lstSids.size() > 0 ? mSDao.getSName(arrTps[i].lstSids
                         .get(0)) : null;
@@ -304,7 +356,9 @@ public class TransPath {
                 tsp.direction = mSDao.getTransDirection(startSid, endSid);
             }
 
-            meters += arrTps[i].meters;
+            if (!arrTps[i].lid.equals(SubwayConst.Line_99)) {
+                meters += arrTps[i].meters;
+            }
             stations += tsp.lstSNames.size();
             lstTransSubPath.add(tsp);
         }
@@ -322,7 +376,10 @@ public class TransPath {
         } else {
             price = 7 + (meters - 32000) / 20000;
         }
-
+        if (arrTps[0].lid.equals(SubwayConst.Line_99)
+                || arrTps[arrTps.length - 1].lid.equals(SubwayConst.Line_99)) {
+            price += 25;
+        }
         resultTpd.stations = stations + transTimes - 1;
         resultTpd.meters = meters;
         resultTpd.minutes = minutes;
@@ -331,4 +388,26 @@ public class TransPath {
 
         return resultTpd;
     }
+
+    /**
+     * @param sr
+     *            所有换乘信息
+     * @param tpd
+     *            换乘详细信息
+     */
+    private void addTransPathDetail(SearchResult sr, TransPathDetail tpd) {
+        Logger.d(TAG, "addTransPathDetail");
+        boolean isExist = false;
+        for (TransPathDetail t : sr.lstTpd) {
+            if (t.toString().equals(tpd.toString())) {
+                isExist = true;
+                break;
+            }
+        }
+        if (!isExist) {
+            sr.lstTpd.add(tpd);
+            sr.count = sr.lstTpd.size();
+        }
+    }
+
 }

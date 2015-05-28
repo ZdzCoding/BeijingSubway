@@ -3,6 +3,10 @@ package com.dsunny.subway.bean;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * @author m 所有换乘信息
+ * 
+ */
 public class SearchResult implements Serializable {
 
     private static final long serialVersionUID = 1L;

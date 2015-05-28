@@ -116,7 +116,7 @@ public class StationDao {
      * @return 所有车站名
      */
     public List<String> getAllSNames() {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
 
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT DISTINCT SName ");
@@ -124,14 +124,14 @@ public class StationDao {
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**
@@ -181,7 +181,7 @@ public class StationDao {
      *            车站名
      * @return 车站所在线路的车站ID
      */
-    public String getLineSID(String lid, String sName) {
+    public String getLineSIDByName(String lid, String sName) {
         String result = "";
 
         StringBuilder sql = new StringBuilder();
@@ -189,6 +189,35 @@ public class StationDao {
         sql.append(" FROM STATION ");
         sql.append(" WHERE SID LIKE '").append(lid).append("%' ");
         sql.append(" AND SName = '").append(sName).append("' ");
+
+        Cursor c = db.query(sql.toString());
+        if (c.moveToFirst()) {
+            result = c.getString(0);
+        }
+
+        Logger.d(TAG, sql.toString());
+        Logger.d(TAG, result);
+
+        c.close();
+        return result;
+    }
+
+    /**
+     * @param lid
+     *            线路ID
+     * @param sid
+     *            车站ID
+     * @return 车站所在线路的车站ID
+     */
+    public String getLineSIDById(String lid, String sid) {
+        String result = "";
+
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT t1.SID ");
+        sql.append(" FROM STATION t1, STATION t2 ");
+        sql.append(" WHERE t1.SID LIKE '").append(lid).append("%' ");
+        sql.append(" AND t2.SID = '").append(sid).append("' ");
+        sql.append(" AND t1.SName = t2.SName ");
 
         Cursor c = db.query(sql.toString());
         if (c.moveToFirst()) {
@@ -244,7 +273,7 @@ public class StationDao {
      * @return 所有相同车站名的车站ID
      */
     public List<String> getAllSidsByName(String sName) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
 
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT SID ");
@@ -254,14 +283,14 @@ public class StationDao {
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**
@@ -270,7 +299,7 @@ public class StationDao {
      * @return 所有相同车站名的车站ID
      */
     public List<String> getAllSidsById(String sid) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
 
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT t1.SID ");
@@ -280,14 +309,14 @@ public class StationDao {
 
         Cursor c = db.query(sql.toString());
         if (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**
@@ -323,7 +352,7 @@ public class StationDao {
      * @return 起始车站到终点车站之间的车站名(不包括起始车站与终点车站)
      */
     public List<String> getSNamesBetween(String startSid, String endSid) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
 
         StringBuilder sql = new StringBuilder();
         if (startSid.compareTo(endSid) > 0) {
@@ -344,14 +373,14 @@ public class StationDao {
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**
@@ -362,7 +391,7 @@ public class StationDao {
      * @return 包含环线起点站与终点站的车站名
      */
     public List<String> getSNamesWith(String startSid, String endSid) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
         String lid = startSid.substring(0, 2);
 
         StringBuilder sql = new StringBuilder();
@@ -406,13 +435,13 @@ public class StationDao {
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
-        return result;
+        return lstResult;
     }
 
     /**
@@ -425,19 +454,19 @@ public class StationDao {
      * @return 包含指定车站名的起点站与终点站间的车站名
      */
     public List<String> getSNamesContain(String startSid, String endSid, String containSName) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
 
         List<String> lst1 = getSNamesBetween(startSid, endSid);
         List<String> lst2 = getSNamesWith(startSid, endSid);
 
         if (TextUtils.isEmpty(containSName)) {
-            result = lst1.size() < lst2.size() ? lst1 : lst2;
+            lstResult = lst1.size() < lst2.size() ? lst1 : lst2;
         } else {
-            result = lst1.contains(containSName) ? lst1 : lst2;
+            lstResult = lst1.contains(containSName) ? lst1 : lst2;
         }
 
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
-        return result;
+        return lstResult;
     }
 }

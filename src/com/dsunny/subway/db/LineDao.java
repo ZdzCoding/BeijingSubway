@@ -100,7 +100,7 @@ public class LineDao {
      * @return 与车站ID临近的换乘站ID或线路终点站
      */
     public List<String> getAdjacentSids(String sid) {
-        List<String> result = new ArrayList<String>();
+        List<String> lstResult = new ArrayList<String>();
         String lid = Utils.getLID(sid);
 
         StringBuilder sql = new StringBuilder();
@@ -120,14 +120,14 @@ public class LineDao {
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
-            result.add(c.getString(0));
+            lstResult.add(c.getString(0));
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**

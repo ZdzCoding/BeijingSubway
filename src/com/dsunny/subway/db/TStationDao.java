@@ -51,7 +51,7 @@ public class TStationDao {
      * @return 所有车站换乘信息
      */
     public List<TStation> getAllTStations() {
-        List<TStation> result = new ArrayList<TStation>();
+        List<TStation> lstResult = new ArrayList<TStation>();
 
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT StartSID, EndSID, LID, Meters ");
@@ -64,14 +64,14 @@ public class TStationDao {
             ts.EndSID = c.getString(1);
             ts.LID = c.getString(2);
             ts.Meters = c.getInt(3);
-            result.add(ts);
+            lstResult.add(ts);
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
     }
 
     /**
@@ -80,7 +80,7 @@ public class TStationDao {
      * @return 线路车站换乘信息
      */
     public List<TStation> getLineTStations(String lid) {
-        List<TStation> result = new ArrayList<TStation>();
+        List<TStation> lstResult = new ArrayList<TStation>();
 
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT StartSID, EndSID, LID, Meters ");
@@ -94,13 +94,49 @@ public class TStationDao {
             ts.EndSID = c.getString(1);
             ts.LID = c.getString(2);
             ts.Meters = c.getInt(3);
-            result.add(ts);
+            lstResult.add(ts);
         }
 
         Logger.d(TAG, sql.toString());
-        Logger.d(TAG, result.toString());
+        Logger.d(TAG, lstResult.toString());
 
         c.close();
-        return result;
+        return lstResult;
+    }
+
+    /**
+     * @param arrLids
+     *            线路ID
+     * @return 线路车站换乘信息
+     */
+    public List<TStation> getLinesTStations(String[] arrLids) {
+        List<TStation> lstResult = new ArrayList<TStation>();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT StartSID, EndSID, LID, Meters ");
+        sql.append(" FROM TSTATION ");
+        sql.append(" WHERE LID = '").append(arrLids[0]).append("' ");
+        for (int i = 1; i < arrLids.length; i++) {
+            sql.append(" UNION ALL ");
+            sql.append(" SELECT StartSID, EndSID, LID, Meters ");
+            sql.append(" FROM TSTATION ");
+            sql.append(" WHERE LID = '").append(arrLids[i]).append("' ");
+        }
+
+        Cursor c = db.query(sql.toString());
+        while (c.moveToNext()) {
+            TStation ts = new TStation();
+            ts.StartSID = c.getString(0);
+            ts.EndSID = c.getString(1);
+            ts.LID = c.getString(2);
+            ts.Meters = c.getInt(3);
+            lstResult.add(ts);
+        }
+
+        Logger.d(TAG, sql.toString());
+        Logger.d(TAG, lstResult.toString());
+
+        c.close();
+        return lstResult;
     }
 }

@@ -137,9 +137,15 @@ public class SubwayGraph {
      */
     public void delEdge(String startSid, String endSid) {
         StartStation s = getStartStation(startSid);
-        s.lstEndStation.remove(getEndStationIndex(s, endSid));
-        if (s.lstEndStation.size() == 0) {
-            lstStartStation.remove(getStartStationIndex(startSid));
+        int index = getEndStationIndex(s, endSid);
+        if (index != ErrIndex) {
+            s.lstEndStation.remove(index);
+            if (s.lstEndStation.size() == 0) {
+                index = getStartStationIndex(startSid);
+                if (index != ErrIndex) {
+                    lstStartStation.remove(index);
+                }
+            }
         }
     }
 
@@ -328,9 +334,9 @@ public class SubwayGraph {
 
     /**
      * @param startSid
-     *            检索起始车站ID
+     *            检索起始车站ID(图)
      * @param endSid
-     *            检索终止车站ID
+     *            检索终止车站ID(图)
      * @return 换乘路径
      */
     private List<GraphSubPath> dijkstra(String startSid, String endSid) {
@@ -408,9 +414,11 @@ public class SubwayGraph {
     }
 
     /**
-     * @param lstSubPath
-     *            换乘路径
-     * @return 简要换乘路径
+     * @param startSid
+     *            检索起始车站ID(图)
+     * @param endSid
+     *            检索终止车站ID(图)
+     * @return 换乘简要信息
      */
     public TransPathSummary[] getTransPathSummary(String startSid, String endSid) {
         Logger.d(TAG, "getTransPathSummary");
