@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="40dp" >
+    android:layout_height="40dp"
+    android:background="#EEEEEE" >
     
     <TextView 
         android:id="@+id/tv_transfer"
@@ -12,7 +13,6 @@
         android:paddingLeft="12dp"
         android:gravity="center_vertical"
         android:text="换乘1号线(苹果园方向)途径3站"
-        android:textSize="16sp"
-        android:background="#EEEEEE"/>
+        android:textSize="16sp" />
 
 </RelativeLayout>

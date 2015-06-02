@@ -108,7 +108,7 @@ public class LineGraph {
         if (curTimes <= totalTimes) {
             stack.push(startIdx);
             isVisited[startIdx] = true;
-            for (int i = 0; i < 19; i++) {
+            for (int i = 0; i < linesCount; i++) {
                 if (!isVisited[i] && SubwayConst.Graph[startIdx][i] == 1) {
                     DFS(i, endIdx);
                 }

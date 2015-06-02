@@ -121,6 +121,8 @@ public class StationDao {
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT DISTINCT SName ");
         sql.append(" FROM STATION ");
+        sql.append(" WHERE IsValid = '1' ");
+        sql.append(" ORDER BY SID ");
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {

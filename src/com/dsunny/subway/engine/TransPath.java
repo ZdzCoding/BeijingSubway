@@ -66,6 +66,7 @@ public class TransPath {
             result = getAllTransPaths(lstStartSids.get(0), lstEndSids.get(0), lstTransLids);
         }
 
+        Logger.d(TAG, result.toString());
         return result;
     }
 
@@ -106,14 +107,33 @@ public class TransPath {
         Logger.d(TAG, "getAllTransLids");
         List<String[]> lstResult = null;
 
+        String sLid = null;
         List<String> lstStartLids = new ArrayList<String>();
         for (String s : lstStartSids) {
-            lstStartLids.add(Utils.getLID(s));
+            sLid = Utils.getLID(s);
+            if (sLid.equals(SubwayConst.Line_14)) {
+                if (s.compareTo(SID_1408) < 0) {
+                    lstStartLids.add(SubwayConst.Line_14a);
+                } else if (s.compareTo(SID_1425) > 0) {
+                    lstStartLids.add(SubwayConst.Line_14b);
+                }
+            } else {
+                lstStartLids.add(sLid);
+            }
         }
 
         List<String> lstEndLids = new ArrayList<String>();
         for (String s : lstEndSids) {
-            lstEndLids.add(Utils.getLID(s));
+            sLid = Utils.getLID(s);
+            if (sLid.equals(SubwayConst.Line_14)) {
+                if (s.compareTo(SID_1408) < 0) {
+                    lstEndLids.add(SubwayConst.Line_14a);
+                } else if (s.compareTo(SID_1425) > 0) {
+                    lstEndLids.add(SubwayConst.Line_14b);
+                }
+            } else {
+                lstEndLids.add(sLid);
+            }
         }
 
         List<String> lstCommonLids = new ArrayList<String>(lstStartLids);
@@ -130,18 +150,7 @@ public class TransPath {
             String sCmnLid = lstCommonLids.get(0);
             String startSid = null;
             String endSid = null;
-            if (sCmnLid.equals(SubwayConst.Line_14)) {
-                startSid = mSDao.getLineSIDByName(SubwayConst.Line_14, lstStartSids.get(0));
-                endSid = mSDao.getLineSIDByName(SubwayConst.Line_14, lstEndSids.get(0));
-                if ((startSid.compareTo(SID_1408) < 0 && endSid.compareTo(SID_1408) < 0)
-                        || (endSid.compareTo(SID_1425) > 0 && endSid.compareTo(SID_1425) > 0)) {
-                    lstResult = new ArrayList<String[]>();
-                    lstResult.add(new String[] { sCmnLid });
-                } else {
-                    LineGraph lg2 = new LineGraph();
-                    lstResult = lg2.getAllTransLids(SubwayConst.Line_14a, SubwayConst.Line_14b);
-                }
-            } else if (sCmnLid.equals(SubwayConst.Line_99)) {
+            if (sCmnLid.equals(SubwayConst.Line_99)) {
                 startSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstStartSids.get(0));
                 endSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstEndSids.get(0));
                 if ((startSid.equals("9902") && endSid.equals("9903"))
@@ -172,6 +181,9 @@ public class TransPath {
             break;
         }
 
+        for (String[] arr : lstResult) {
+            Logger.d(TAG, arr.toString());
+        }
         return lstResult;
     }
 
@@ -289,12 +301,21 @@ public class TransPath {
 
             sg.delDoubleEdges(preGraphSid, nxtGraphSid);
 
-            meters = mLDao.getAdjacentSMeters(lstStartAdjSids.get(0), startSid);
-            sg.addDoubleEdges(preGraphSid, startSid, lid, meters);
-            meters = mLDao.getAdjacentSMeters(startSid, endSid);
-            sg.addDoubleEdges(startSid, endSid, lid, meters);
-            meters = mLDao.getAdjacentSMeters(endSid, lstStartAdjSids.get(1));
-            sg.addDoubleEdges(endSid, nxtGraphSid, lid, meters);
+            String preSid = null;
+            String nxtSid = null;
+            if (startSid.compareTo(endSid) < 0) {
+                preSid = startSid;
+                nxtSid = endSid;
+            } else {
+                preSid = endSid;
+                nxtSid = startSid;
+            }
+            meters = mLDao.getAdjacentSMeters(lstStartAdjSids.get(0), preSid);
+            sg.addDoubleEdges(preGraphSid, preSid, lid, meters);
+            meters = mLDao.getAdjacentSMeters(preSid, nxtSid);
+            sg.addDoubleEdges(preSid, nxtSid, lid, meters);
+            meters = mLDao.getAdjacentSMeters(nxtSid, lstStartAdjSids.get(1));
+            sg.addDoubleEdges(nxtSid, nxtGraphSid, lid, meters);
         } else {
             if (lstStartAdjSids != null) {
                 lid = Utils.getLID(startSid);

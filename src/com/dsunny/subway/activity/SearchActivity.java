@@ -21,7 +21,6 @@ import com.dsunny.subway.constant.BaiduConst;
 import com.dsunny.subway.constant.Message;
 import com.dsunny.subway.engine.BaiduVoice;
 import com.dsunny.subway.engine.TransPath;
-import com.dsunny.subway.util.Logger;
 import com.dsunny.subway.util.Utils;
 
 /**
@@ -202,7 +201,6 @@ public class SearchActivity extends BaseActivity {
         default:
             break;
         }
-
-        Logger.d(TAG, sr.toString());
     }
+
 }

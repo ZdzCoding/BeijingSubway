@@ -9,7 +9,6 @@ import android.widget.TextView;
 import com.dsunny.subway.R;
 import com.dsunny.subway.adapter.ResultPagerAdapter;
 import com.dsunny.subway.bean.SearchResult;
-import com.dsunny.subway.bean.TransPathDetail;
 import com.dsunny.subway.constant.Message;
 
 /**
@@ -22,7 +21,7 @@ public class ResultActivity extends BaseActivity {
     private static final String DefaultCurrent = "1";
 
     private ViewPager vp_result;
-    private TextView tv_destination, tv_current, tv_summary;
+    private TextView tv_destination, tv_current;
     private ResultPagerAdapter adapter;
     private OnPageChangeListener opcl;
     private SearchResult mResult;
@@ -44,7 +43,6 @@ public class ResultActivity extends BaseActivity {
         vp_result = (ViewPager) findViewById(R.id.vp_result);
         tv_destination = (TextView) findViewById(R.id.tv_destination);
         tv_current = (TextView) findViewById(R.id.tv_current);
-        tv_summary = (TextView) findViewById(R.id.tv_summary);
     }
 
     /**
@@ -84,14 +82,6 @@ public class ResultActivity extends BaseActivity {
                 current = current.replaceFirst(Message.WORD_REPLACE, String.valueOf(position + 1));
                 current = current.replaceFirst(Message.WORD_REPLACE, String.valueOf(mResult.count));
                 tv_current.setText(current);
-
-                String summary = new String(Message.FORMAT_SUMMARY);
-                TransPathDetail tpd = mResult.lstTpd.get(position);
-                summary = summary.replaceFirst(Message.WORD_REPLACE, String.valueOf(tpd.minutes));
-                summary = summary.replaceFirst(Message.WORD_REPLACE,
-                        String.valueOf(tpd.lstTransSubPath.size()));
-                summary = summary.replaceFirst(Message.WORD_REPLACE, String.valueOf(tpd.price));
-                tv_summary.setText(summary);
             }
 
             /*

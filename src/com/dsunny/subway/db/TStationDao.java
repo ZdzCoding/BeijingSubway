@@ -85,7 +85,7 @@ public class TStationDao {
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT StartSID, EndSID, LID, Meters ");
         sql.append(" FROM TSTATION ");
-        sql.append(" WHERE LID = '").append(lid).append("' ");
+        sql.append(" WHERE LID = '").append(lid.substring(0, 2)).append("' ");
 
         Cursor c = db.query(sql.toString());
         while (c.moveToNext()) {
@@ -115,12 +115,12 @@ public class TStationDao {
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT StartSID, EndSID, LID, Meters ");
         sql.append(" FROM TSTATION ");
-        sql.append(" WHERE LID = '").append(arrLids[0]).append("' ");
+        sql.append(" WHERE LID = '").append(arrLids[0].substring(0, 2)).append("' ");
         for (int i = 1; i < arrLids.length; i++) {
-            sql.append(" UNION ALL ");
+            sql.append(" UNION ");
             sql.append(" SELECT StartSID, EndSID, LID, Meters ");
             sql.append(" FROM TSTATION ");
-            sql.append(" WHERE LID = '").append(arrLids[i]).append("' ");
+            sql.append(" WHERE LID = '").append(arrLids[i].substring(0, 2)).append("' ");
         }
 
         Cursor c = db.query(sql.toString());

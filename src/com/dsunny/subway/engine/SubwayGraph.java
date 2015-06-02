@@ -456,6 +456,7 @@ public class SubwayGraph {
             }
         }
 
+        Logger.d(TAG, arrTps.toString());
         return arrTps;
     }
 }

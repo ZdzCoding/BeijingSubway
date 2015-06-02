@@ -97,7 +97,7 @@ public class LineDao {
     /**
      * @param sid
      *            车站ID(线路)
-     * @return 与车站ID临近的换乘站ID或线路终点站
+     * @return 与车站ID临近的换乘站ID或线路终点站[小，大]
      */
     public List<String> getAdjacentSids(String sid) {
         List<String> lstResult = new ArrayList<String>();
