@@ -112,15 +112,19 @@ public class TStationDao {
     public List<TStation> getLinesTStations(String[] arrLids) {
         List<TStation> lstResult = new ArrayList<TStation>();
 
+        String lid = arrLids[0].length() > 2 ? arrLids[0].substring(0, 2) : arrLids[0];
+
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT StartSID, EndSID, LID, Meters ");
         sql.append(" FROM TSTATION ");
-        sql.append(" WHERE LID = '").append(arrLids[0].substring(0, 2)).append("' ");
+        sql.append(" WHERE LID = '").append(lid).append("' ");
         for (int i = 1; i < arrLids.length; i++) {
+            lid = arrLids[i].length() > 2 ? arrLids[i].substring(0, 2) : arrLids[i];
+
             sql.append(" UNION ");
             sql.append(" SELECT StartSID, EndSID, LID, Meters ");
             sql.append(" FROM TSTATION ");
-            sql.append(" WHERE LID = '").append(arrLids[i].substring(0, 2)).append("' ");
+            sql.append(" WHERE LID = '").append(lid).append("' ");
         }
 
         Cursor c = db.query(sql.toString());

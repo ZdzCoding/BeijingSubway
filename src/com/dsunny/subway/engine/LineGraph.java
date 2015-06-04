@@ -14,18 +14,20 @@ public class LineGraph {
 
     private int linesCount;
     private int totalTimes;
+    private int minTimes;
     private int curTimes;
     private Stack<Integer> stack;
     private List<String[]> result;
     private boolean[] isVisited;
 
     public LineGraph() {
-        linesCount = SubwayConst.Lines.length;
-        totalTimes = linesCount;
-        curTimes = 0;
-        stack = new Stack<Integer>();
-        result = new ArrayList<String[]>();
-        isVisited = new boolean[linesCount];
+        this.linesCount = SubwayConst.Lines.length;
+        this.totalTimes = linesCount;
+        this.minTimes = linesCount;
+        this.curTimes = 0;
+        this.stack = new Stack<Integer>();
+        this.result = new ArrayList<String[]>();
+        this.isVisited = new boolean[linesCount];
     }
 
     /**
@@ -38,14 +40,17 @@ public class LineGraph {
     private void getTransLids(String startLid, String endLid) {
         int startIdx = getLineIndex(startLid);
         int endIdx = getLineIndex(endLid);
-        this.curTimes = 0;
-        this.totalTimes = SubwayConst.Graph[startIdx][endIdx];
+        totalTimes = SubwayConst.Graph[startIdx][endIdx];
+        minTimes = totalTimes < minTimes ? totalTimes : minTimes;
 
-        for (int i = 0; i < linesCount; i++) {
-            isVisited[i] = false;
+        if (minTimes == totalTimes) {
+            curTimes = 0;
+            for (int i = 0; i < linesCount; i++) {
+                isVisited[i] = false;
+            }
+
+            DFS(startIdx, endIdx);
         }
-
-        DFS(startIdx, endIdx);
     }
 
     /**
@@ -71,6 +76,12 @@ public class LineGraph {
         for (String start : lstStartLids) {
             for (String end : lstEndLids) {
                 getTransLids(start, end);
+            }
+        }
+
+        for (int i = result.size(); i > 0; i--) {
+            if (result.get(i - 1).length != minTimes + 1) {
+                result.remove(i - 1);
             }
         }
 

@@ -14,12 +14,12 @@
         android:layout_alignParentLeft="true"
 	    android:layout_width="match_parent"
 	    android:layout_height="40dp"
-	    android:paddingLeft="8dp"
+	    android:paddingLeft="10dp"
 	    android:text="北京地铁 绿色出行"
 	    android:drawableLeft="@drawable/ic_subway_small"
 	    android:gravity="left|center"
 	    android:textSize="16sp"
-	    android:textColor="#51AB72"/>
+	    android:textColor="#41A765" />
     
     <View 
         android:id="@+id/view_line_head"

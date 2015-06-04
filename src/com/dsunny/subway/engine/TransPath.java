@@ -2,6 +2,8 @@ package com.dsunny.subway.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.text.TextUtils;
 
@@ -87,13 +89,24 @@ public class TransPath {
             code = Message.ERR_END_EMPTY;
         } else if (startSName.equals(endSName)) {
             code = Message.ERR_SAME_STATION;
-        } else if (!mSDao.isStationExist(startSName)) {
+        } else if (check(startSName) && !mSDao.isStationExist(startSName)) {
             code = Message.ERR_START_NOT_EXIST;
-        } else if (!mSDao.isStationExist(endSName)) {
+        } else if (check(endSName) && !mSDao.isStationExist(endSName)) {
             code = Message.ERR_END_NOT_EXIST;
         }
 
         return code;
+    }
+
+    /**
+     * @param sName
+     *            车站名
+     * @return 只为汉字或字母
+     */
+    private boolean check(String sName) {
+        Pattern p = Pattern.compile("^[a-zA-Z\u4e00-\u9fa5]+$");
+        Matcher m = p.matcher(sName);
+        return m.matches();
     }
 
     /**
@@ -148,26 +161,19 @@ public class TransPath {
         case 1:
             // 在同一线路
             String sCmnLid = lstCommonLids.get(0);
-            String startSid = null;
-            String endSid = null;
+            lstResult = new ArrayList<String[]>();
+            lstResult.add(new String[] { sCmnLid });
             if (sCmnLid.equals(SubwayConst.Line_99)) {
-                startSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstStartSids.get(0));
-                endSid = mSDao.getLineSIDByName(SubwayConst.Line_99, lstEndSids.get(0));
+                String startSid = mSDao.getLineSIDById(SubwayConst.Line_99, lstStartSids.get(0));
+                String endSid = mSDao.getLineSIDById(SubwayConst.Line_99, lstEndSids.get(0));
                 if ((startSid.equals("9902") && endSid.equals("9903"))
                         || (startSid.equals("9903") && endSid.equals("9902"))) {
-                    lstResult = new ArrayList<String[]>();
-                    lstResult.add(new String[] { sCmnLid });
-                    lstResult.add(new String[] { SubwayConst.Line_02, SubwayConst.Line_13,
-                            SubwayConst.Line_10 });
+                    lstResult.add(new String[] { SubwayConst.Line_13, SubwayConst.Line_10 });
                 }
-            } else {
-                lstResult = new ArrayList<String[]>();
-                lstResult.add(new String[] { sCmnLid });
-                if (mLDao.isLineHasLoop(sCmnLid)) {
-                    List<String> lstLids = mTDao.getAcrossLids(sCmnLid);
-                    for (String lid : lstLids) {
-                        lstResult.add(new String[] { sCmnLid, lid });
-                    }
+            } else if (mLDao.isLineHasLoop(sCmnLid)) {
+                List<String> lstLids = mTDao.getAcrossLids(sCmnLid);
+                for (String lid : lstLids) {
+                    lstResult.add(new String[] { sCmnLid, lid });
                 }
             }
             break;
@@ -386,7 +392,9 @@ public class TransPath {
 
         int price = 0;
         int minutes = meters / 500 + 1;
-        if (meters <= 6000) {
+        if (meters == 0) {
+            price = 0;
+        } else if (meters <= 6000) {
             price = 3;
         } else if (meters <= 12000) {
             price = 4;
