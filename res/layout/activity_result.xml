@@ -11,6 +11,7 @@
         android:id="@+id/rl_head"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:layout_width="match_parent"
@@ -19,23 +20,24 @@
         <TextView
 	        android:id="@+id/tv_destination"
 	        android:layout_alignParentLeft="true"
+	        android:layout_alignParentStart="true"
 	        android:layout_width="wrap_content"
 	        android:layout_height="match_parent"
-	        android:paddingLeft="2dp"
 	        android:gravity="center_vertical"
 	        android:text="北京站-丰台科技园"
 	        android:textSize="16sp"
-	        android:textColor="#41A765" />
+	        android:textColor="#51AB72" />
         
         <TextView 
             android:id="@+id/tv_current"
             android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:text="线路1/3"
             android:textSize="12sp"
-            android:textColor="#41A765" />
+            android:textColor="#51AB72" />
     </RelativeLayout>
     
     <android.support.v4.view.ViewPager

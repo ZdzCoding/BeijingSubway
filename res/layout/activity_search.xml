@@ -12,14 +12,18 @@
         android:id="@+id/tv_title"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
 	    android:layout_width="match_parent"
 	    android:layout_height="40dp"
 	    android:paddingLeft="10dp"
+	    android:paddingStart="10dp"
+	    android:paddingRight="10dp"
 	    android:text="北京地铁 绿色出行"
 	    android:drawableLeft="@drawable/ic_subway_small"
-	    android:gravity="left|center"
+	    android:drawableStart="@drawable/ic_subway_small"
+	    android:gravity="start|center"
 	    android:textSize="16sp"
-	    android:textColor="#41A765" />
+	    android:textColor="#51AB72" />
     
     <View 
         android:id="@+id/view_line_head"
@@ -44,6 +48,7 @@
     <EditText
         android:id="@+id/et_start"
         android:layout_toRightOf="@id/btn_start"
+        android:layout_toEndOf="@id/btn_start"
         android:layout_below="@id/view_line_head"
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -55,6 +60,8 @@
         android:maxLength="10"
         android:textSize="16sp"
         android:paddingLeft="2dp"
+        android:paddingStart="2dp"
+        android:paddingRight="2dp"
         android:hint="车站名，拼音缩写"
         android:textColorHint="#B8B8B8" />
     
@@ -73,6 +80,7 @@
     <EditText
         android:id="@+id/et_end"
         android:layout_toRightOf="@id/btn_end"
+        android:layout_toEndOf="@id/btn_end"
         android:layout_below="@id/et_start"
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -84,6 +92,8 @@
         android:maxLength="10"
         android:textSize="16sp"
         android:paddingLeft="2dp"
+        android:paddingStart="2dp"
+        android:paddingRight="2dp"
         android:hint="车站名，拼音缩写"
         android:textColorHint="#B8B8B8" />
     
@@ -120,6 +130,7 @@
             android:id="@+id/et_result"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="none"

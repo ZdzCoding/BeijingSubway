@@ -14,29 +14,29 @@ import com.dsunny.subway.util.Utils;
  * 
  */
 public class MainSplashActivity extends Activity {
-    public static final String TAG = "MainActivity";
+	public static final String TAG = "MainActivity";
 
-    private static final long DELAY_TIME = 2000L;
+	private static final long DELAY_TIME = 2000L;
 
-    private Handler handler = new Handler();
-    private Runnable runnable = new Runnable() {
+	private Handler handler = new Handler();
+	private Runnable runnable = new Runnable() {
 
-        @Override
-        public void run() {
-            Intent intent = new Intent();
-            intent.setClass(MainSplashActivity.this, SearchActivity.class);
-            startActivity(intent);
-            finish();
-        }
-    };
+		@Override
+		public void run() {
+			Intent intent = new Intent();
+			intent.setClass(MainSplashActivity.this, SearchActivity.class);
+			startActivity(intent);
+			finish();
+		}
+	};
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_mainsplash);
-        Utils.copyDBFile(this);
-        handler.postDelayed(runnable, DELAY_TIME);
-    }
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.activity_mainsplash);
+		Utils.copyDBFile(this);
+		handler.postDelayed(runnable, DELAY_TIME);
+	}
 
 }
