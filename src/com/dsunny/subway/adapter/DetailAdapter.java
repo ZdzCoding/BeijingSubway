@@ -135,12 +135,9 @@ public class DetailAdapter extends BaseAdapter {
 			}
 		}
 		DetailAdapter.Item head = new DetailAdapter.Item();
-		String text = new String(Message.FORMAT_DETAIL);
 		TransSubPath tsp = tpd.lstTransSubPath.get(tpd.lstTransSubPath.size() - 1);
-		text = text.replaceFirst(Message.WORD_REPLACE, tsp.endSName);
-		text = text.replaceFirst(Message.WORD_REPLACE, tsp.lineName);
-		head.name = text;
-		head.type = TYPE_STATION;
+		head.name = tsp.endSName;
+		head.type = TYPE_TRANSFER;
 		lstStations.add(head);
 	}
 
