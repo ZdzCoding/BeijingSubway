@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.Window;
 
+import com.baidu.mobstat.StatService;
 import com.dsunny.subway.SubwayApp;
 
 /**
@@ -18,7 +19,7 @@ public class BaseActivity extends Activity {
 
 	public BaseActivity() {
 		this.mContext = this;
-		mApp = SubwayApp.getInstance();
+		this.mApp = SubwayApp.getInstance();
 	}
 
 	@Override
@@ -40,11 +41,13 @@ public class BaseActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		StatService.onResume(mContext);
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		StatService.onPause(mContext);
 	}
 
 	@Override

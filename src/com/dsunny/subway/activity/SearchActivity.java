@@ -6,6 +6,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.content.Intent;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.GestureOverlayView.OnGesturePerformedListener;
+import android.gesture.Prediction;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -34,8 +40,11 @@ public class SearchActivity extends BaseActivity {
 	private EditText et_start, et_end, et_result;
 	private Button btn_start, btn_end, btn_search, btn_talk;
 	private BaiduASRDigitalDialog baiduDialog;
-	private DialogRecognitionListener recognitionListener;
+	private GestureOverlayView gesture;
+	private GestureLibrary gLibrary;
+	private DialogRecognitionListener drl;
 	private View.OnClickListener ocl;
+	private OnGesturePerformedListener ogpl;
 	private boolean isBackPressed;
 
 	@Override
@@ -79,6 +88,7 @@ public class SearchActivity extends BaseActivity {
 		et_result = (EditText) findViewById(R.id.et_result);
 		btn_search = (Button) findViewById(R.id.btn_search);
 		btn_talk = (Button) findViewById(R.id.btn_talk);
+		gesture = (GestureOverlayView) findViewById(R.id.gesture);
 	}
 
 	/**
@@ -86,6 +96,8 @@ public class SearchActivity extends BaseActivity {
 	 */
 	private void initDatas() {
 		isBackPressed = false;
+		gLibrary = GestureLibraries.fromRawResource(mContext, R.raw.gestures);
+		gLibrary.load();
 	}
 
 	/**
@@ -98,8 +110,8 @@ public class SearchActivity extends BaseActivity {
 			public void onClick(View v) {
 				switch (v.getId()) {
 					case R.id.btn_start:
-
 						break;
+
 					case R.id.btn_end:
 						break;
 
@@ -121,7 +133,7 @@ public class SearchActivity extends BaseActivity {
 			}
 		};
 
-		recognitionListener = new DialogRecognitionListener() {
+		drl = new DialogRecognitionListener() {
 
 			@Override
 			public void onResults(Bundle results) {
@@ -135,6 +147,27 @@ public class SearchActivity extends BaseActivity {
 				}
 			}
 		};
+
+		ogpl = new OnGesturePerformedListener() {
+
+			@Override
+			public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+				List<Prediction> lstPredictions = gLibrary.recognize(gesture);
+				if (!lstPredictions.isEmpty()) {
+					Prediction p0 = lstPredictions.get(0);
+					if (p0.score > 8.0) {
+						if (p0.name.equals(Message.GESTURE_ABOUTME)) {
+							Intent intent = new Intent(mContext, AboutMeActivity.class);
+							startActivity(intent);
+						} else if (p0.name.equals(Message.GESTURE_FORWARD)) {
+
+						} else if (p0.name.equals(Message.GESTURE_BACKWARD)) {
+
+						}
+					}
+				}
+			}
+		};
 	}
 
 	/**
@@ -145,6 +178,7 @@ public class SearchActivity extends BaseActivity {
 		btn_end.setOnClickListener(ocl);
 		btn_search.setOnClickListener(ocl);
 		btn_talk.setOnClickListener(ocl);
+		gesture.addOnGesturePerformedListener(ogpl);
 	}
 
 	/**
@@ -161,7 +195,7 @@ public class SearchActivity extends BaseActivity {
 		        BaiduASRDigitalDialog.THEME_BLUE_LIGHTBG);
 
 		baiduDialog = new BaiduASRDigitalDialog(mContext, params);
-		baiduDialog.setDialogRecognitionListener(recognitionListener);
+		baiduDialog.setDialogRecognitionListener(drl);
 		baiduDialog.getParams().putInt(BaiduASRDigitalDialog.PARAM_PROP,
 		        VoiceRecognitionConfig.PROP_INPUT);
 		baiduDialog.getParams().putString(BaiduASRDigitalDialog.PARAM_LANGUAGE,

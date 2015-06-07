@@ -126,6 +126,19 @@
         android:layout_height="match_parent"
         android:visibility="visible">
         
+        <android.gesture.GestureOverlayView 
+            android:id="@+id/gesture"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:eventsInterceptionEnabled="true"
+            android:fadeEnabled="true"
+            android:gestureStrokeType="single"
+            android:uncertainGestureColor="#0DC818"
+            android:gestureColor="#45C01A"
+            android:gestureStrokeWidth="5">
+            
+        </android.gesture.GestureOverlayView>
+        
         <EditText 
             android:id="@+id/et_result"
             android:layout_alignParentTop="true"

@@ -33,4 +33,9 @@ public class Message {
 	public static final String FORMAT_DETAIL = "X(X)";
 
 	public static final String WORD_REPLACE = "X";
+
+	public static final String GESTURE_ABOUTME = "AboutMe";
+	public static final String GESTURE_FORWARD = "Forward";
+	public static final String GESTURE_BACKWARD = "Backward";
+
 }
